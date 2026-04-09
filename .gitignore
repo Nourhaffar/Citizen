@@ -2,34 +2,21 @@
 # Dependencies
 node_modules/
 
-# Environment variables
-.env
-.env.local
-.env.*
-
 # Build outputs
 dist/
 build/
 target/
 
-# Logs
-*.log
+# Environment variables
+.env
+.env.local
+.env.*
 
 # IDE files
 .vscode/
 .idea/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Temporary files
-*.tmp
 *.swp
 *.swo
-
-# Package lock files
-package-lock.json
 
 # Python cache
 __pycache__/
@@ -37,18 +24,23 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Coverage reports
+# Logs
+*.log
+
+# Temp files
+*.tmp
+
+# Coverage
 coverage/
 htmlcov/
+.coverage
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
+# OS files
+.DS_Store
+Thumbs.db
 
-# Backup files
-*~
-*.bak
-*.backup
-
+# Package manager caches
+.npm/
+.yarn/
+.pnpm-store/
 ```
