@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { productService } from '../services';
 
@@ -14,7 +15,7 @@ const Carousel = () => {
   const fetchFeaturedProducts = async () => {
     try {
       const response = await productService.getFeatured();
-      setFeaturedProducts(response.data.products || []);
+      setFeaturedProducts(response.data || []);
     } catch (error) {
       console.error('Error fetching featured products:', error);
     } finally {
@@ -72,14 +73,19 @@ const Carousel = () => {
                   {product.name}
                 </h2>
                 <p className="text-lg md:text-xl mb-6 opacity-90">
-                  {product.description?.substring(0, 150)}...
+                  {product.description
+                    ? `${product.description.substring(0, 150)}...`
+                    : 'Featured groceries from the Citizen marketplace.'}
                 </p>
                 <div className="text-2xl md:text-3xl font-semibold mb-4">
-                  ${product.price?.toFixed(2)}
+                  ${Number(product.price || 0).toFixed(2)}
                 </div>
-                <button className="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                <Link
+                  to={`/products/${product.id}`}
+                  className="inline-block bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+                >
                   Shop Now
-                </button>
+                </Link>
               </div>
             </div>
           </div>

@@ -1,42 +1,15 @@
-import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { supermarketService } from '../services';
+import { useAuth } from '../context/AuthContext';
 
 const Cart = () => {
-  const { items, updateQuantity, removeItem, clearCart } = useCart();
-  const [supermarkets, setSupermarkets] = useState({});
+  const { groups, items, totalItems, totalPrice, loading, updateQuantity, removeItem, clearCart } = useCart();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchSupermarkets();
-  }, []);
-
-  const fetchSupermarkets = async () => {
-    try {
-      const response = await supermarketService.getAll();
-      const超市Map = {};
-      (response.data.supermarkets || []).forEach(s => {
-        超市Map[s.id] = s;
-      });
-      setSupermarkets(超市Map);
-    } catch (error) {
-      console.error('Error fetching supermarkets:', error);
-    }
-  };
-
-  const groupedItems = items.reduce((acc, item) => {
-    const supermarketId = item.supermarket_id;
-    if (!acc[supermarketId]) {
-      acc[supermarketId] = [];
-    }
-    acc[supermarketId].push(item);
-    return acc;
-  }, {});
-
   const calculateSubtotal = () => {
-    return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return Number(totalPrice || 0);
   };
 
   const handleUpdateQuantity = async (itemId, newQuantity) => {
@@ -59,6 +32,41 @@ const Cart = () => {
   const handleCheckout = () => {
     navigate('/checkout');
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
+        <ShoppingCart size={64} className="mx-auto text-gray-300 mb-4" />
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">Sign in to view your cart</h1>
+        <p className="text-gray-600 mb-6">
+          Your cart is stored on the backend, so you need an account before you can add or review items.
+        </p>
+        <Link
+          to="/login"
+          className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors inline-block"
+        >
+          Go to Login
+        </Link>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-40 bg-gray-200 rounded"></div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-4">
+              <div className="h-48 bg-gray-200 rounded-lg"></div>
+              <div className="h-48 bg-gray-200 rounded-lg"></div>
+            </div>
+            <div className="h-64 bg-gray-200 rounded-lg"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -93,16 +101,16 @@ const Cart = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-6">
-          {Object.entries(groupedItems).map(([supermarketId, items]) => (
-            <div key={supermarketId} className="bg-white rounded-lg shadow-md overflow-hidden">
+          {groups.map((group) => (
+            <div key={group.supermarket} className="bg-white rounded-lg shadow-md overflow-hidden">
               <div className="bg-gradient-to-r from-primary-100 to-secondary-100 px-6 py-4">
                 <h2 className="text-xl font-semibold text-gray-800">
-                  {supermarkets[supermarketId]?.name || `Supermarket ${supermarketId}`}
+                  {group.supermarket}
                 </h2>
               </div>
               
               <div className="divide-y">
-                {items.map((item) => (
+                {(group.items || []).map((item) => (
                   <div key={item.id} className="p-6 flex gap-4">
                     {/* Product Image */}
                     <div className="w-24 h-24 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
@@ -125,13 +133,13 @@ const Cart = () => {
                     {/* Product Info */}
                     <div className="flex-1">
                       <Link
-                        to={`/product/${item.product_id}`}
+                        to={`/products/${item.productId}`}
                         className="text-lg font-semibold text-gray-800 hover:text-primary-600 transition-colors"
                       >
                         {item.name}
                       </Link>
                       <p className="text-gray-500 text-sm mt-1">
-                        ${item.price?.toFixed(2)} each
+                        ${Number(item.price || 0).toFixed(2)} each
                       </p>
 
                       {/* Quantity Controls */}
@@ -157,7 +165,7 @@ const Cart = () => {
                     {/* Price and Remove */}
                     <div className="text-right">
                       <p className="text-xl font-bold text-primary-600 mb-2">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        ${Number(item.itemTotal || Number(item.price || 0) * Number(item.quantity || 0)).toFixed(2)}
                       </p>
                       <button
                         onClick={() => handleRemoveItem(item.id)}
@@ -169,6 +177,9 @@ const Cart = () => {
                     </div>
                   </div>
                 ))}
+                <div className="p-4 bg-gray-50 text-right text-sm font-semibold text-gray-700">
+                  Supermarket subtotal: ${Number(group.subtotal || 0).toFixed(2)}
+                </div>
               </div>
             </div>
           ))}
@@ -181,17 +192,21 @@ const Cart = () => {
             
             <div className="space-y-4 mb-6">
               <div className="flex justify-between text-gray-600">
-                <span>Subtotal ({items.reduce((sum, item) => sum + item.quantity, 0)} items)</span>
+                <span>Subtotal ({totalItems} items)</span>
                 <span>${calculateSubtotal().toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Delivery Fee</span>
                 <span>$5.99</span>
               </div>
+              <div className="flex justify-between text-gray-600">
+                <span>Estimated Tax</span>
+                <span>${(calculateSubtotal() * 0.08).toFixed(2)}</span>
+              </div>
               <div className="border-t pt-4">
                 <div className="flex justify-between text-lg font-bold text-gray-800">
                   <span>Total</span>
-                  <span>${(calculateSubtotal() + 5.99).toFixed(2)}</span>
+                  <span>${(calculateSubtotal() + 5.99 + calculateSubtotal() * 0.08).toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -213,7 +228,7 @@ const Cart = () => {
             {/* Multi-vendor Notice */}
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-800">
-                <strong>Note:</strong> Your order contains products from multiple supermarkets. 
+                <strong>Note:</strong> Your order contains products from multiple supermarkets.
                 All items will be delivered together in a single delivery.
               </p>
             </div>

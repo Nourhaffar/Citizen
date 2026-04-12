@@ -29,12 +29,12 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api', adminRoutes); // Admin routes are prefixed within the file
-
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Citizen API is running' });
 });
+
+app.use('/api', adminRoutes); // Admin routes are prefixed within the file
 
 // Error handling middleware
 app.use((err, req, res, next) => {

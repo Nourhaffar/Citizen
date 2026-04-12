@@ -9,6 +9,7 @@ const Navbar = () => {
   const { user, logout, isAdmin } = useAuth();
   const { totalItems } = useCart();
   const navigate = useNavigate();
+  const displayName = user?.name || user?.email;
 
   const handleLogout = () => {
     logout();
@@ -47,7 +48,7 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <>
-                <span className="text-gray-700">Hello, {user.name}</span>
+                <span className="text-gray-700">Hello, {displayName}</span>
                 <button
                   onClick={handleLogout}
                   className="p-2 text-gray-700 hover:text-red-600 transition-colors"
@@ -119,7 +120,7 @@ const Navbar = () => {
               <div className="pt-4 border-t">
                 {user ? (
                   <>
-                    <span className="text-gray-700 block mb-2">Hello, {user.name}</span>
+                    <span className="text-gray-700 block mb-2">Hello, {displayName}</span>
                     <button
                       onClick={handleLogout}
                       className="text-red-600 hover:text-red-700 transition-colors flex items-center"

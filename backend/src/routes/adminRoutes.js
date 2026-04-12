@@ -210,7 +210,6 @@ router.get('/admin/orders', async (req, res) => {
       SELECT o.*, u.email, u.first_name, u.last_name 
       FROM orders o 
       JOIN users u ON o.user_id = u.id 
-      ORDER BY o.created_at DESC
     `;
     
     const params = [];
@@ -220,6 +219,7 @@ router.get('/admin/orders', async (req, res) => {
       params.push(status);
     }
     
+    query += ' ORDER BY o.created_at DESC';
     query += ' LIMIT ? OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
 

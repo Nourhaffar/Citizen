@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { categoryService, productService } from '../services';
 import { Filter, SlidersHorizontal, X } from 'lucide-react';
@@ -23,8 +22,8 @@ const Categories = () => {
         categoryService.getAll(),
         productService.getAll(),
       ]);
-      setCategories(categoriesRes.data.categories || []);
-      setProducts(productsRes.data.products || []);
+      setCategories(categoriesRes.data || []);
+      setProducts(productsRes.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -34,16 +33,23 @@ const Categories = () => {
 
   const filteredProducts = products
     .filter(product => {
-      if (selectedCategory && product.category_id !== selectedCategory) return false;
-      if (product.price < priceRange[0] || product.price > priceRange[1]) return false;
+      if (selectedCategory && Number(product.category_id) !== selectedCategory) {
+        return false;
+      }
+
+      const productPrice = Number(product.price || 0);
+      if (productPrice < priceRange[0] || productPrice > priceRange[1]) {
+        return false;
+      }
+
       return true;
     })
     .sort((a, b) => {
       switch (sortBy) {
         case 'price-low':
-          return a.price - b.price;
+          return Number(a.price || 0) - Number(b.price || 0);
         case 'price-high':
-          return b.price - a.price;
+          return Number(b.price || 0) - Number(a.price || 0);
         case 'name':
         default:
           return a.name.localeCompare(b.name);

@@ -1,53 +1,43 @@
 import api from './api';
 
 export const productService = {
-  getAll: () => api.get('/products'),
+  getAll: (params = {}) => api.get('/products', { params }),
   getById: (id) => api.get(`/products/${id}`),
-  getByCategory: (categoryId) => api.get(`/products/category/${categoryId}`),
-  getFeatured: () => api.get('/products/featured'),
-  getBestSelling: () => api.get('/products/bestselling'),
-  search: (query) => api.get(`/products/search?q=${query}`),
+  getFeatured: (params = {}) => api.get('/products/featured', { params }),
+  getBestSelling: (params = {}) => api.get('/products/best-selling', { params }),
+  getRecommended: (userId, params = {}) =>
+    api.get(userId ? `/products/recommended/${userId}` : '/products/recommended', { params }),
 };
 
 export const categoryService = {
   getAll: () => api.get('/categories'),
-  getById: (id) => api.get(`/categories/${id}`),
+  getProducts: (id, params = {}) => api.get(`/categories/${id}/products`, { params }),
 };
 
 export const supermarketService = {
   getAll: () => api.get('/supermarkets'),
   getById: (id) => api.get(`/supermarkets/${id}`),
+  getProducts: (id, params = {}) => api.get(`/supermarkets/${id}/products`, { params }),
 };
 
 export const cartService = {
   getCart: () => api.get('/cart'),
-  addToCart: (productId, quantity = 1, supermarketId) => 
-    api.post('/cart/items', { productId, quantity, supermarketId }),
-  updateQuantity: (itemId, quantity) => 
-    api.put(`/cart/items/${itemId}`, { quantity }),
-  removeItem: (itemId) => api.delete(`/cart/items/${itemId}`),
-  clearCart: () => api.delete('/cart'),
+  addToCart: (productId, quantity = 1) => api.post('/cart/add', { productId, quantity }),
+  updateQuantity: (itemId, quantity) => api.put(`/cart/update/${itemId}`, { quantity }),
+  removeItem: (itemId) => api.delete(`/cart/remove/${itemId}`),
+  clearCart: () => api.delete('/cart/clear'),
 };
 
 export const orderService = {
   create: (orderData) => api.post('/orders', orderData),
-  getAll: () => api.get('/orders'),
+  getUserOrders: () => api.get('/orders/my-orders'),
   getById: (id) => api.get(`/orders/${id}`),
-  getUserOrders: () => api.get('/orders/user'),
 };
 
 export const authService = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (userData) => api.post('/auth/register', userData),
-  logout: () => api.post('/auth/logout'),
-  getCurrentUser: () => api.get('/auth/me'),
-};
-
-export const userService = {
-  getAll: () => api.get('/users'),
-  getById: (id) => api.get(`/users/${id}`),
-  update: (id, data) => api.put(`/users/${id}`, data),
-  delete: (id) => api.delete(`/users/${id}`),
+  getCurrentUser: () => api.get('/auth/profile'),
 };
 
 export const adminService = {

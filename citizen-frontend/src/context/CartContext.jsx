@@ -1,94 +1,123 @@
-import { createContext, useContext, useReducer, useEffect } from 'react';
+import { createContext, useContext, useEffect, useReducer } from 'react';
 import { cartService } from '../services';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext();
+
+const initialState = {
+  groups: [],
+  items: [],
+  totalItems: 0,
+  totalPrice: 0,
+  loading: false,
+  error: null,
+};
+
+const flattenGroups = (groups = []) =>
+  groups.flatMap((group) =>
+    (group.items || []).map((item) => ({
+      ...item,
+      supermarket_name: group.supermarket,
+      supermarket_subtotal: group.subtotal,
+    }))
+  );
+
+const buildCartState = (groups = []) => {
+  const items = flattenGroups(groups);
+  const totalItems = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  const totalPrice = items.reduce(
+    (sum, item) => sum + Number(item.itemTotal ?? Number(item.price || 0) * Number(item.quantity || 0)),
+    0
+  );
+
+  return {
+    groups,
+    items,
+    totalItems,
+    totalPrice: Number(totalPrice.toFixed(2)),
+  };
+};
 
 const cartReducer = (state, action) => {
   switch (action.type) {
     case 'SET_CART':
-      return { ...state, items: action.payload.items, loading: false };
-    case 'ADD_ITEM':
-      return { 
-        ...state, 
-        items: [...state.items, action.payload],
-        totalItems: state.totalItems + action.payload.quantity 
-      };
-    case 'UPDATE_ITEM':
       return {
         ...state,
-        items: state.items.map(item =>
-          item.id === action.payload.id ? action.payload : item
-        ),
+        ...buildCartState(action.payload),
+        loading: false,
+        error: null,
       };
-    case 'REMOVE_ITEM':
-      return {
-        ...state,
-        items: state.items.filter(item => item.id !== action.payload),
-        totalItems: state.totalItems - 1,
-      };
-    case 'CLEAR_CART':
-      return { ...state, items: [], totalItems: 0 };
     case 'SET_LOADING':
-      return { ...state, loading: true };
+      return { ...state, loading: true, error: null };
     case 'SET_ERROR':
       return { ...state, error: action.payload, loading: false };
+    case 'RESET_CART':
+      return { ...initialState };
     default:
       return state;
   }
 };
 
 export const CartProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(cartReducer, {
-    items: [],
-    totalItems: 0,
-    totalPrice: 0,
-    loading: false,
-    error: null,
-  });
+  const { isAuthenticated } = useAuth();
+  const [state, dispatch] = useReducer(cartReducer, initialState);
 
   useEffect(() => {
     fetchCart();
-  }, []);
+  }, [isAuthenticated]);
 
   const fetchCart = async () => {
+    if (!localStorage.getItem('token')) {
+      dispatch({ type: 'RESET_CART' });
+      return;
+    }
+
     try {
       dispatch({ type: 'SET_LOADING' });
       const response = await cartService.getCart();
-      dispatch({ 
-        type: 'SET_CART', 
-        payload: { items: response.data.items || [] } 
+      dispatch({
+        type: 'SET_CART',
+        payload: response.data.items || [],
       });
-      calculateTotals(response.data.items || []);
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
+      if (error.response?.status === 401) {
+        dispatch({ type: 'RESET_CART' });
+        return;
+      }
+
+      dispatch({
+        type: 'SET_ERROR',
+        payload: error.response?.data?.error || error.message || 'Failed to fetch cart',
+      });
     }
   };
 
-  const calculateTotals = (items) => {
-    const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const count = items.reduce((sum, item) => sum + item.quantity, 0);
-    state.totalPrice = total;
-    state.totalItems = count;
-  };
+  const addToCart = async (productId, quantity = 1) => {
+    if (!localStorage.getItem('token')) {
+      throw new Error('Please log in to manage your cart.');
+    }
 
-  const addToCart = async (productId, quantity, supermarketId) => {
     try {
-      const response = await cartService.addToCart(productId, quantity, supermarketId);
-      dispatch({ type: 'ADD_ITEM', payload: response.data.item });
-      return response.data;
+      await cartService.addToCart(productId, quantity);
+      await fetchCart();
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
+      dispatch({
+        type: 'SET_ERROR',
+        payload: error.response?.data?.error || error.message || 'Failed to add item to cart',
+      });
       throw error;
     }
   };
 
   const updateQuantity = async (itemId, quantity) => {
     try {
-      const response = await cartService.updateQuantity(itemId, quantity);
-      dispatch({ type: 'UPDATE_ITEM', payload: response.data.item });
-      return response.data;
+      await cartService.updateQuantity(itemId, quantity);
+      await fetchCart();
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
+      dispatch({
+        type: 'SET_ERROR',
+        payload: error.response?.data?.error || error.message || 'Failed to update cart item',
+      });
       throw error;
     }
   };
@@ -96,19 +125,30 @@ export const CartProvider = ({ children }) => {
   const removeItem = async (itemId) => {
     try {
       await cartService.removeItem(itemId);
-      dispatch({ type: 'REMOVE_ITEM', payload: itemId });
+      await fetchCart();
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
+      dispatch({
+        type: 'SET_ERROR',
+        payload: error.response?.data?.error || error.message || 'Failed to remove cart item',
+      });
       throw error;
     }
   };
 
   const clearCart = async () => {
+    if (!localStorage.getItem('token')) {
+      dispatch({ type: 'RESET_CART' });
+      return;
+    }
+
     try {
       await cartService.clearCart();
-      dispatch({ type: 'CLEAR_CART' });
+      await fetchCart();
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
+      dispatch({
+        type: 'SET_ERROR',
+        payload: error.response?.data?.error || error.message || 'Failed to clear cart',
+      });
       throw error;
     }
   };

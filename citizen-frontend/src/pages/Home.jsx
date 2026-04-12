@@ -4,28 +4,30 @@ import Carousel from '../components/Carousel';
 import ProductGrid from '../components/ProductGrid';
 import { productService, supermarketService } from '../services';
 import { Store, TrendingUp, Sparkles } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Home = () => {
   const [bestSellingProducts, setBestSellingProducts] = useState([]);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [supermarkets, setSupermarkets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [user?.id]);
 
   const fetchData = async () => {
     try {
       const [bestSellingRes, recommendedRes, supermarketsRes] = await Promise.all([
-        productService.getBestSelling(),
-        productService.getAll(), // In production, this would be personalized recommendations
+        productService.getBestSelling({ limit: 8 }),
+        productService.getRecommended(user?.id, { limit: 8 }),
         supermarketService.getAll(),
       ]);
 
-      setBestSellingProducts(bestSellingRes.data.products?.slice(0, 8) || []);
-      setRecommendedProducts(recommendedRes.data.products?.slice(0, 8) || []);
-      setSupermarkets(supermarketsRes.data.supermarkets || []);
+      setBestSellingProducts(bestSellingRes.data || []);
+      setRecommendedProducts(recommendedRes.data || []);
+      setSupermarkets(supermarketsRes.data || []);
     } catch (error) {
       console.error('Error fetching home data:', error);
     } finally {
@@ -34,7 +36,7 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Hero Section with Carousel */}
       <section className="mb-12">
         <Carousel />

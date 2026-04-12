@@ -16,7 +16,7 @@ const ProductCard = ({ product }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-      <Link to={`/product/${product.id}`}>
+      <Link to={`/products/${product.id}`}>
         <div className="relative h-48 bg-gray-200">
           {product.image_url ? (
             <img
@@ -36,19 +36,19 @@ const ProductCard = ({ product }) => {
       </Link>
       
       <div className="p-4">
-        <Link to={`/product/${product.id}`}>
+        <Link to={`/products/${product.id}`}>
           <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2 hover:text-primary-600 transition-colors">
             {product.name}
           </h3>
         </Link>
         
         <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-          {product.description?.substring(0, 80)}...
+          {product.description ? `${product.description.substring(0, 80)}...` : 'Fresh groceries ready for delivery.'}
         </p>
         
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold text-primary-600">
-            ${product.price?.toFixed(2)}
+            ${Number(product.price || 0).toFixed(2)}
           </span>
           
           <button

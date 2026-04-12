@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, Lock, Phone, MapPin } from 'lucide-react';
+import { User, Mail, Lock, Phone } from 'lucide-react';
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
     phone: '',
-    address: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -42,11 +42,11 @@ const Register = () => {
 
     try {
       const userData = {
-        name: formData.name,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
         email: formData.email,
         password: formData.password,
         phone: formData.phone,
-        address: formData.address,
       };
 
       const result = await register(userData);
@@ -78,21 +78,41 @@ const Register = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              Full Name
-            </label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
-                placeholder="John Doe"
-              />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">
+                First Name
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  placeholder="John"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Last Name
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  placeholder="Doe"
+                />
+              </div>
             </div>
           </div>
 
@@ -163,23 +183,6 @@ const Register = () => {
                 onChange={handleChange}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                 placeholder="+1 (555) 123-4567"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              Address
-            </label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-3 text-gray-400" size={20} />
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                rows="3"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
-                placeholder="Your delivery address"
               />
             </div>
           </div>

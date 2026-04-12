@@ -113,7 +113,7 @@ router.get('/best-selling', async (req, res) => {
 });
 
 // Get recommended products (based on category preferences or random for new users)
-router.get('/recommended/:userId?', async (req, res) => {
+router.get(['/recommended', '/recommended/:userId'], async (req, res) => {
   try {
     const { userId } = req.params;
     const { limit = 10 } = req.query;

@@ -18,7 +18,7 @@ const ProductDetails = () => {
   const fetchProduct = async () => {
     try {
       const response = await productService.getById(id);
-      setProduct(response.data.product);
+      setProduct(response.data);
     } catch (error) {
       console.error('Error fetching product:', error);
     } finally {
@@ -109,7 +109,7 @@ const ProductDetails = () => {
           </div>
 
           <p className="text-3xl font-bold text-primary-600 mb-6">
-            ${product.price?.toFixed(2)}
+            ${Number(product.price || 0).toFixed(2)}
           </p>
 
           <div className="mb-6">
@@ -158,13 +158,13 @@ const ProductDetails = () => {
             onClick={handleAddToCart}
             disabled={product.stock_quantity === 0}
             className={`w-full py-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-2 transition-colors ${
-              product.stock_quantity === 0
+              Number(product.stock_quantity) === 0
                 ? 'bg-gray-300 cursor-not-allowed'
                 : 'bg-primary-600 hover:bg-primary-700 text-white'
             }`}
           >
             <ShoppingCart size={20} />
-            {product.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+            {Number(product.stock_quantity) === 0 ? 'Out of Stock' : 'Add to Cart'}
           </button>
         </div>
       </div>
